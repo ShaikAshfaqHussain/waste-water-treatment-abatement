@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoVision AI | Wastewater Pollution Abatement Platform</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+    .glass-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .gradient-header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0369a1 100%); }
+    .slider-track { -webkit-appearance: none; height: 6px; border-radius: 4px; background: #cbd5e1; outline: none; }
+    .slider-track::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #0284c7; cursor: pointer; border: 2px solid #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  </style>
+</head>
+<body class="text-slate-800">
+
+  <!-- Top App Navigation -->
+  <header class="gradient-header text-white px-6 py-5 shadow-lg">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="p-2.5 bg-sky-500/20 border border-sky-400/30 rounded-xl">
+          <i data-lucide="droplets" class="w-8 h-8 text-sky-400"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight">EcoVision AI</h1>
+          <p class="text-xs text-sky-200">Wastewater Treatment Pollution Abatement Platform (FastAPI & ML)</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-3 bg-slate-800/60 border border-slate-700/60 px-4 py-2 rounded-lg">
+          <span class="text-xs text-slate-300 font-medium">Plant Compliance:</span>
+          <span id="headerComplianceBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500 text-white">OPTIMAL</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="/api/download/cleaned-csv" class="flex items-center gap-1.5 text-xs bg-sky-600 hover:bg-sky-500 text-white px-3 py-2 rounded-lg font-medium transition shadow-sm">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i> Cleaned Data (CSV)
+          </a>
+          <a href="/docs" target="_blank" class="text-xs text-slate-300 hover:text-white underline">REST API Docs</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Navigation Tabs -->
+  <div class="border-b border-slate-200 bg-white sticky top-0 z-30 shadow-sm">
+    <div class="max-w-7xl mx-auto px-6 flex space-x-8 text-sm font-semibold">
+      <button onclick="switchTab('simulator')" id="tab-btn-simulator" class="py-4 border-b-2 border-sky-600 text-sky-600 flex items-center gap-2">
+        <i data-lucide="sliders" class="w-4 h-4"></i> What-If Simulator & Abatement
+      </button>
+      <button onclick="switchTab('timeseries')" id="tab-btn-timeseries" class="py-4 border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2">
+        <i data-lucide="trending-up" class="w-4 h-4"></i> Time-Series & Correlations
+      </button>
+      <button onclick="switchTab('cleaning')" id="tab-btn-cleaning" class="py-4 border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2">
+        <i data-lucide="file-check-2" class="w-4 h-4"></i> Data Cleaning & Sensor Audit
+      </button>
+      <button onclick="switchTab('models')" id="tab-btn-models" class="py-4 border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2">
+        <i data-lucide="cpu" class="w-4 h-4"></i> ML Model Evaluation
+      </button>
+    </div>
+  </div>
+
+  <main class="max-w-7xl mx-auto px-6 py-8">
+
+    <!-- ============================================================= -->
+    <!-- TAB 1: WHAT-IF PREDICTION SIMULATOR & ABATEMENT ADVISOR -->
+    <!-- ============================================================= -->
+    <div id="tab-simulator" class="space-y-6">
+      
+      <!-- Preset Buttons -->
+      <div class="glass-card p-5">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">⚡ Operational Presets</h2>
+            <p class="text-xs text-slate-500">Quick-load plant conditions to simulate dynamic environmental stress.</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="applyPreset('nominal')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition">🟢 Nominal Operation</button>
+            <button onclick="applyPreset('storm')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition">🌧️ Storm Surge (+Flow)</button>
+            <button onclick="applyPreset('toxic')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition">🏭 Industrial Shock (High COD)</button>
+            <button onclick="applyPreset('blower_trip')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition">⚠️ Aeration Blower Trip</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Compliance Alert Banner -->
+      <div id="complianceAlertBanner" class="p-4 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-900 flex items-start gap-3 shadow-sm">
+        <i data-lucide="shield-check" class="w-6 h-6 text-emerald-600 flex-shrink-0 mt-0.5"></i>
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 id="alertStatusHeading" class="font-bold text-sm text-emerald-800">OPTIMAL OPERATION (Plant Health: 100/100)</h3>
+            <span id="alertViolationsCount" class="text-xs font-medium bg-emerald-200/60 text-emerald-800 px-2 py-0.5 rounded-full">0 Violations</span>
+          </div>
+          <p id="alertStatusMessage" class="text-xs text-emerald-700 mt-1">All effluent parameters satisfy environmental discharge regulations.</p>
+        </div>
+      </div>
+
+      <!-- Predicted Target Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        
+        <div class="glass-card p-4 border-t-4 border-t-sky-500">
+          <div class="flex justify-between items-center text-xs text-slate-500 font-medium">
+            <span>Dissolved Oxygen (DO)</span>
+            <span id="badge-DO_eff" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">NORMAL</span>
+          </div>
+          <div class="mt-2 text-2xl font-black text-slate-800" id="val-DO_eff">5.64 <span class="text-xs font-normal text-slate-500">mg/L</span></div>
+          <div class="mt-1 text-[11px] text-slate-500 flex items-center justify-between">
+            <span>Discharge Limit:</span>
+            <span class="font-semibold text-slate-700">&ge; 5.0 mg/L</span>
+          </div>
+        </div>
+
+        <div class="glass-card p-4 border-t-4 border-t-sky-500">
+          <div class="flex justify-between items-center text-xs text-slate-500 font-medium">
+            <span>BOD₅ (5-Day Demand)</span>
+            <span id="badge-BOD_eff" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">NORMAL</span>
+          </div>
+          <div class="mt-2 text-2xl font-black text-slate-800" id="val-BOD_eff">14.2 <span class="text-xs font-normal text-slate-500">mg/L</span></div>
+          <div class="mt-1 text-[11px] text-slate-500 flex items-center justify-between">
+            <span>Discharge Cap:</span>
+            <span class="font-semibold text-slate-700">&le; 30.0 mg/L</span>
+          </div>
+        </div>
+
+        <div class="glass-card p-4 border-t-4 border-t-sky-500">
+          <div class="flex justify-between items-center text-xs text-slate-500 font-medium">
+            <span>Chemical COD</span>
+            <span id="badge-COD_eff" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">NORMAL</span>
+          </div>
+          <div class="mt-2 text-2xl font-black text-slate-800" id="val-COD_eff">68.5 <span class="text-xs font-normal text-slate-500">mg/L</span></div>
+          <div class="mt-1 text-[11px] text-slate-500 flex items-center justify-between">
+            <span>Discharge Cap:</span>
+            <span class="font-semibold text-slate-700">&le; 125.0 mg/L</span>
+          </div>
+        </div>
+
+        <div class="glass-card p-4 border-t-4 border-t-sky-500">
+          <div class="flex justify-between items-center text-xs text-slate-500 font-medium">
+            <span>Effluent pH</span>
+            <span id="badge-pH_eff" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">NORMAL</span>
+          </div>
+          <div class="mt-2 text-2xl font-black text-slate-800" id="val-pH_eff">7.24 <span class="text-xs font-normal text-slate-500">pH</span></div>
+          <div class="mt-1 text-[11px] text-slate-500 flex items-center justify-between">
+            <span>Standard Band:</span>
+            <span class="font-semibold text-slate-700">6.5 - 8.5</span>
+          </div>
+        </div>
+
+        <div class="glass-card p-4 border-t-4 border-t-sky-500">
+          <div class="flex justify-between items-center text-xs text-slate-500 font-medium">
+            <span>Turbidity</span>
+            <span id="badge-Turbidity_eff" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">NORMAL</span>
+          </div>
+          <div class="mt-2 text-2xl font-black text-slate-800" id="val-Turbidity_eff">3.12 <span class="text-xs font-normal text-slate-500">NTU</span></div>
+          <div class="mt-1 text-[11px] text-slate-500 flex items-center justify-between">
+            <span>Standard Cap:</span>
+            <span class="font-semibold text-slate-700">&le; 10.0 NTU</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Controls & Simulation Sliders -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Column 1: Influent Hydraulic & Quality -->
+        <div class="glass-card p-5 space-y-4">
+          <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5 border-b pb-2">
+            <i data-lucide="waves" class="w-4 h-4 text-sky-600"></i> Influent Telemetry
+          </h3>
+
+          <div>
+            <div class="flex justify-between text-xs font-medium mb-1">
+              <span>Influent Flow (Q_in):</span>
+              <span id="label-Q_in" class="font-bold text-sky-700">22,000 m³/d</span>
+            </div>
+            <input type="range" id="input-Q_in" min="10000" max="40000" step="500" value="22000" class="slider-track w-full" oninput="runSimulation()">
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs font-medium mb-1">
+              <span>Water Temperature:</span>
+              <span id="label-Temp_water" class="font-bold text-sky-700">20.0 °C</span>
+            </div>
+            <input type="range" id="input-Temp_water" min="12" max="32" step="0.5" value="20" class="slider-track w-full" oninput="runSimulation()">
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs font-medium mb-1">
+              <span>Influent pH:</span>
+              <span id="label-pH_in" class="font-bold text-sky-700">7.3</span>
+            </div>
+            <input type="range" id="input-pH_in" min="5.0" max="9.5" step="0.1" value="7.3" class="slider-track w-full" oninput="runSimulation()">
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs font-medium mb-1">
+              <span>Influent BOD₅:</span>
+              <span id="label-BOD_in" class="font-bold text-sky-700">220 mg/L</span>
+            </div>
+            <input type="range" id="input-BOD_in" min="100" max="500" step="10" value="220" class="slider-track w-full" oninput="runSimulation()">
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs font-medium mb-1">
+              <span>Influent COD:</span>
+              <span id="label-COD_in" class="font-bold text-sky-700">460 mg/L</span>
+            </div>
+            <input type="range" id="input-COD_in" min="200" max="1000" step="10" value="460" class="slider-track w-full" oninput="runSimulation()">
+          </div>
+        </div>
+
+        <!-- Column 2: Secondary Treatment & Biological Controls -->
+        <div class="glass-card p-5 space-y-4">
+          <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5 border-b pb-2">
+            <i data-lucide="fan" class="w-4 h-4 text-sky-600"></i> Aeration & Biological Sludge
+          </h3>
+
+          <div>
+            <div class="flex justify-between text-xs font-medium mb-1">
+              <span>Aeration DO Setpoint:</span>
+              <span id="label-DO_aeration" class="font-bold text-sky-700">2.2 mg/L</span>
+            </div>
+            <input type="range" id="input-DO_aeration" min="0.5" max="4.0" step="0.1" value="2.2" class="slider-track w-full" oninput="runSimulation()">
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs font-medium mb-1">
+              <span>Blower Speed:</span>
+              <span id="label-Blower_speed_pct" class="font-bold text-sky-700">70 %</span>
+            </div>
+            <input type="range" id="input-Blower_speed_pct" min="40" max="100" step="1" value="70" class="slider-track w-full" oninput="runSimulation()">
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs font-medium mb-1">
+              <span>Aeration MLSS:</span>
+              <span id="label-MLSS" class="font-bold text-sky-700">3,200 mg/L</span>
+            </div>
+            <input type="range" id="input-MLSS" min="1800" max="5000" step="50" value="3200" class="slider-track w-full" oninput="runSimulation()">
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs font-medium mb-1">
+              <span>Return Sludge Flow (RAS):</span>
+              <span id="label-RAS_flow" class="font-bold text-sky-700">14,000 m³/d</span>
+            </div>
+            <input type="range" id="input-RAS_flow" min="5000" max="28000" step="500" value="14000" class="slider-track w-full" oninput="runSimulation()">
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs font-medium mb-1">
+              <span>PAC Coagulant Dose:</span>
+              <span id="label-PAC_dosage" class="font-bold text-sky-700">12 mg/L</span>
+            </div>
+            <input type="range" id="input-PAC_dosage" min="0" max="35" step="1" value="12" class="slider-track w-full" oninput="runSimulation()">
+          </div>
+        </div>
+
+        <!-- Column 3: Kinetic Indicators & Removal Gauges -->
+        <div class="glass-card p-5 space-y-4">
+          <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5 border-b pb-2">
+            <i data-lucide="gauge" class="w-4 h-4 text-sky-600"></i> Kinetic Performance
+          </h3>
+
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
+            <div class="flex justify-between text-xs">
+              <span class="text-slate-500">BOD Removal Efficiency:</span>
+              <span id="gauge-bod-rem" class="font-bold text-emerald-700">93.5%</span>
+            </div>
+            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+              <div id="bar-bod-rem" class="bg-emerald-500 h-2 rounded-full" style="width: 93.5%;"></div>
+            </div>
+
+            <div class="flex justify-between text-xs pt-1">
+              <span class="text-slate-500">COD Removal Efficiency:</span>
+              <span id="gauge-cod-rem" class="font-bold text-emerald-700">85.1%</span>
+            </div>
+            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+              <div id="bar-cod-rem" class="bg-emerald-500 h-2 rounded-full" style="width: 85.1%;"></div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 text-center">
+            <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <span class="text-[10px] uppercase font-bold text-slate-400">Retention Time (HRT)</span>
+              <div id="stat-hrt" class="text-lg font-bold text-slate-800">9.8 hrs</div>
+            </div>
+            <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <span class="text-[10px] uppercase font-bold text-slate-400">Clarifier SOR</span>
+              <div id="stat-sor" class="text-lg font-bold text-slate-800">0.76 m/h</div>
+            </div>
+            <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <span class="text-[10px] uppercase font-bold text-slate-400">BOD/COD Ratio</span>
+              <div id="stat-biodeg" class="text-lg font-bold text-slate-800">0.48</div>
+            </div>
+            <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <span class="text-[10px] uppercase font-bold text-slate-400">F/M Ratio</span>
+              <div id="stat-fm" class="text-lg font-bold text-slate-800">0.22</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Abatement Action Cards -->
+      <div class="glass-card p-6">
+        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+          <i data-lucide="clipboard-list" class="w-4 h-4 text-sky-600"></i> Evidence-Based Pollution Abatement Action Directives
+        </h3>
+        <div id="abatementActionsContainer" class="space-y-3">
+          <!-- Dynamic Abatement Cards Injected Here -->
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- TAB 2: TIME-SERIES & CORRELATIONS -->
+    <!-- ============================================================= -->
+    <div id="tab-timeseries" class="hidden space-y-6">
+      <div class="glass-card p-6">
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">Historical Telemetry Trajectory</h2>
+            <p class="text-xs text-slate-500">Influent versus Effluent trends plotted with regulatory standard thresholds.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-xs font-semibold text-slate-600">Metric:</label>
+            <select id="tsMetricSelect" onchange="renderTimeSeriesChart()" class="text-xs border border-slate-300 rounded px-2.5 py-1.5 bg-white font-medium">
+              <option value="BOD">BOD (Biochemical Demand)</option>
+              <option value="COD">COD (Chemical Demand)</option>
+              <option value="DO">DO (Dissolved Oxygen)</option>
+              <option value="pH">pH Level</option>
+              <option value="Turbidity">Turbidity (NTU)</option>
+            </select>
+          </div>
+        </div>
+        <div class="h-80">
+          <canvas id="timeseriesCanvas"></canvas>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="glass-card p-6">
+          <h3 class="text-sm font-bold text-slate-900 mb-2">Pearson Correlation with Effluent BOD</h3>
+          <p class="text-xs text-slate-500 mb-4">Correlation coefficients of key operational parameters against effluent discharge quality.</p>
+          <div class="h-64">
+            <canvas id="correlationCanvas"></canvas>
+          </div>
+        </div>
+
+        <div class="glass-card p-6">
+          <h3 class="text-sm font-bold text-slate-900 mb-2">Influent Biodegradability Ratio Distribution</h3>
+          <p class="text-xs text-slate-500 mb-4">Histogram of BOD/COD ratios indicating wastewater treatability.</p>
+          <div class="h-64">
+            <canvas id="biodegradabilityCanvas"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- TAB 3: DATA CLEANING & SENSOR AUDIT -->
+    <!-- ============================================================= -->
+    <div id="tab-cleaning" class="hidden space-y-6">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="glass-card p-4 text-center">
+          <span class="text-xs text-slate-500 font-medium">Total Telemetry Observations</span>
+          <div id="auditTotalRecords" class="text-2xl font-black text-slate-800 mt-1">1,500 hrs</div>
+        </div>
+        <div class="glass-card p-4 text-center">
+          <span class="text-xs text-slate-500 font-medium">Missing Packets Imputed</span>
+          <div id="auditMissingCells" class="text-2xl font-black text-sky-600 mt-1">87 cells</div>
+        </div>
+        <div class="glass-card p-4 text-center">
+          <span class="text-xs text-slate-500 font-medium">Negative Drift Corrections</span>
+          <div id="auditNegDrifts" class="text-2xl font-black text-amber-600 mt-1">8 corrections</div>
+        </div>
+        <div class="glass-card p-4 text-center">
+          <span class="text-xs text-slate-500 font-medium">Dataset Quality Score</span>
+          <div id="auditQualityScore" class="text-2xl font-black text-emerald-600 mt-1">99.72%</div>
+        </div>
+      </div>
+
+      <div class="glass-card p-6">
+        <h3 class="text-sm font-bold text-slate-900 mb-4">Sensor Corrections & Imputations by Channel</h3>
+        <div class="h-72">
+          <canvas id="sensorAuditCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- TAB 4: ML MODEL EVALUATION -->
+    <!-- ============================================================= -->
+    <div id="tab-models" class="hidden space-y-6">
+      <div class="glass-card p-6">
+        <h3 class="text-sm font-bold text-slate-900 mb-4">Multi-Output Random Forest Holdout Evaluation</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-100 text-slate-700 uppercase font-bold border-b border-slate-200">
+                <th class="py-3 px-4">Target Effluent Parameter</th>
+                <th class="py-3 px-4">Unit</th>
+                <th class="py-3 px-4">R² Score</th>
+                <th class="py-3 px-4">MAE</th>
+                <th class="py-3 px-4">RMSE</th>
+                <th class="py-3 px-4">MAPE (%)</th>
+              </tr>
+            </thead>
+            <tbody id="metricsTableBody" class="divide-y divide-slate-100">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="glass-card p-6">
+        <h3 class="text-sm font-bold text-slate-900 mb-2">Feature Importance Ranking</h3>
+        <p class="text-xs text-slate-500 mb-4">Gini importance computed across Random Forest decision ensembles.</p>
+        <div class="h-80">
+          <canvas id="featureImportanceCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    let chartInstances = {};
+
+    function switchTab(tabId) {
+      ['simulator', 'timeseries', 'cleaning', 'models'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.add('hidden');
+        const btn = document.getElementById(`tab-btn-${t}`);
+        btn.classList.remove('border-sky-600', 'text-sky-600');
+        btn.classList.add('border-transparent', 'text-slate-500');
+      });
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+      activeBtn.classList.remove('border-transparent', 'text-slate-500');
+      activeBtn.classList.add('border-sky-600', 'text-sky-600');
+
+      if (tabId === 'timeseries') renderTimeSeriesChart();
+      if (tabId === 'cleaning') renderAuditChart();
+      if (tabId === 'models') loadModelMetrics();
+    }
+
+    function applyPreset(mode) {
+      if (mode === 'nominal') {
+        document.getElementById('input-Q_in').value = 22000;
+        document.getElementById('input-BOD_in').value = 220;
+        document.getElementById('input-COD_in').value = 460;
+        document.getElementById('input-DO_aeration').value = 2.2;
+        document.getElementById('input-MLSS').value = 3200;
+        document.getElementById('input-PAC_dosage').value = 12;
+      } else if (mode === 'storm') {
+        document.getElementById('input-Q_in').value = 35000;
+        document.getElementById('input-BOD_in').value = 150;
+        document.getElementById('input-COD_in').value = 320;
+        document.getElementById('input-DO_aeration').value = 1.8;
+        document.getElementById('input-PAC_dosage').value = 6;
+      } else if (mode === 'toxic') {
+        document.getElementById('input-BOD_in').value = 390;
+        document.getElementById('input-COD_in').value = 920;
+        document.getElementById('input-pH_in').value = 5.9;
+        document.getElementById('input-DO_aeration').value = 1.2;
+        document.getElementById('input-PAC_dosage').value = 8;
+      } else if (mode === 'blower_trip') {
+        document.getElementById('input-DO_aeration').value = 0.8;
+        document.getElementById('input-Blower_speed_pct').value = 45;
+      }
+      runSimulation();
+    }
+
+    async function runSimulation() {
+      const q_in = parseFloat(document.getElementById('input-Q_in').value);
+      const temp = parseFloat(document.getElementById('input-Temp_water').value);
+      const ph_in = parseFloat(document.getElementById('input-pH_in').value);
+      const bod_in = parseFloat(document.getElementById('input-BOD_in').value);
+      const cod_in = Math.max(parseFloat(document.getElementById('input-COD_in').value), bod_in * 1.15);
+      const do_aero = parseFloat(document.getElementById('input-DO_aeration').value);
+      const blower = parseFloat(document.getElementById('input-Blower_speed_pct').value);
+      const mlss = parseFloat(document.getElementById('input-MLSS').value);
+      const ras = parseFloat(document.getElementById('input-RAS_flow').value);
+      const pac = parseFloat(document.getElementById('input-PAC_dosage').value);
+
+      document.getElementById('label-Q_in').innerText = `${q_in.toLocaleString()} m³/d`;
+      document.getElementById('label-Temp_water').innerText = `${temp.toFixed(1)} °C`;
+      document.getElementById('label-pH_in').innerText = ph_in.toFixed(1);
+      document.getElementById('label-BOD_in').innerText = `${bod_in} mg/L`;
+      document.getElementById('label-COD_in').innerText = `${cod_in} mg/L`;
+      document.getElementById('label-DO_aeration').innerText = `${do_aero.toFixed(1)} mg/L`;
+      document.getElementById('label-Blower_speed_pct').innerText = `${blower}%`;
+      document.getElementById('label-MLSS').innerText = `${mlss.toLocaleString()} mg/L`;
+      document.getElementById('label-RAS_flow').innerText = `${ras.toLocaleString()} m³/d`;
+      document.getElementById('label-PAC_dosage').innerText = `${pac} mg/L`;
+
+      try {
+        const res = await fetch('/api/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            Q_in: q_in, Temp_water: temp, pH_in: ph_in, BOD_in: bod_in, COD_in: cod_in,
+            TSS_in: 240, TN_in: 38, TP_in: 7, DO_aeration: do_aero, Blower_speed_pct: blower,
+            RAS_flow: ras, WAS_flow: 240, MLSS: mlss, PAC_dosage: pac
+          })
+        });
+        const data = await res.json();
+        updateSimulatorUI(data);
+      } catch (err) {
+        console.error("Simulation error:", err);
+      }
+    }
+
+    function updateSimulatorUI(data) {
+      const p = data.predictions;
+      const c = data.compliance;
+
+      document.getElementById('val-DO_eff').innerHTML = `${p.DO_eff.toFixed(2)} <span class="text-xs font-normal text-slate-500">mg/L</span>`;
+      document.getElementById('val-BOD_eff').innerHTML = `${p.BOD_eff.toFixed(1)} <span class="text-xs font-normal text-slate-500">mg/L</span>`;
+      document.getElementById('val-COD_eff').innerHTML = `${p.COD_eff.toFixed(1)} <span class="text-xs font-normal text-slate-500">mg/L</span>`;
+      document.getElementById('val-pH_eff').innerHTML = `${p.pH_eff.toFixed(2)} <span class="text-xs font-normal text-slate-500">pH</span>`;
+      document.getElementById('val-Turbidity_eff').innerHTML = `${p.Turbidity_eff.toFixed(2)} <span class="text-xs font-normal text-slate-500">NTU</span>`;
+
+      // Update parameter badges
+      ['DO_eff', 'BOD_eff', 'COD_eff', 'pH_eff', 'Turbidity_eff'].forEach(param => {
+        const audit = c.parameter_audits[param];
+        const badge = document.getElementById(`badge-${param}`);
+        badge.innerText = audit.status;
+        if (audit.status === 'NORMAL') {
+          badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800';
+        } else if (audit.status === 'WARNING') {
+          badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800';
+        } else {
+          badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800';
+        }
+      });
+
+      // Update gauges
+      document.getElementById('gauge-bod-rem').innerText = `${p.BOD_removal_pct}%`;
+      document.getElementById('bar-bod-rem').style.width = `${p.BOD_removal_pct}%`;
+      document.getElementById('gauge-cod-rem').innerText = `${p.COD_removal_pct}%`;
+      document.getElementById('bar-cod-rem').style.width = `${p.COD_removal_pct}%`;
+      document.getElementById('stat-hrt').innerText = `${p.HRT_hours} hrs`;
+      document.getElementById('stat-sor').innerText = `${p.Clarifier_SOR_m_h} m/h`;
+      document.getElementById('stat-biodeg').innerText = (p.BOD_removal_pct > 0 ? (document.getElementById('input-BOD_in').value / document.getElementById('input-COD_in').value).toFixed(2) : '0.48');
+      document.getElementById('stat-fm').innerText = p.FM_ratio;
+
+      // Update Compliance Banner
+      const banner = document.getElementById('complianceAlertBanner');
+      const headerBadge = document.getElementById('headerComplianceBadge');
+      const heading = document.getElementById('alertStatusHeading');
+      const msg = document.getElementById('alertStatusMessage');
+      const violBadge = document.getElementById('alertViolationsCount');
+
+      if (c.overall_status === 'CRITICAL_NON_COMPLIANT') {
+        banner.className = 'p-4 rounded-xl border border-rose-300 bg-rose-50 text-rose-900 flex items-start gap-3 shadow-sm';
+        headerBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-600 text-white';
+        headerBadge.innerText = 'CRITICAL ALERT';
+        heading.className = 'font-bold text-sm text-rose-800';
+        heading.innerText = `CRITICAL DISCHARGE EXCEEDANCE (Plant Health: ${c.plant_health_score}/100)`;
+        violBadge.className = 'text-xs font-medium bg-rose-200 text-rose-800 px-2 py-0.5 rounded-full';
+        violBadge.innerText = `${c.critical_violations} Critical Breach(es)`;
+      } else if (c.overall_status === 'WARNING_AT_RISK') {
+        banner.className = 'p-4 rounded-xl border border-amber-300 bg-amber-50 text-amber-900 flex items-start gap-3 shadow-sm';
+        headerBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white';
+        headerBadge.innerText = 'WARNING';
+        heading.className = 'font-bold text-sm text-amber-800';
+        heading.innerText = `OPERATIONAL WARNING: DISCHARGE AT RISK (Plant Health: ${c.plant_health_score}/100)`;
+        violBadge.className = 'text-xs font-medium bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full';
+        violBadge.innerText = `${c.warning_conditions} Warning(s)`;
+      } else {
+        banner.className = 'p-4 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-900 flex items-start gap-3 shadow-sm';
+        headerBadge.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500 text-white';
+        headerBadge.innerText = 'OPTIMAL';
+        heading.className = 'font-bold text-sm text-emerald-800';
+        heading.innerText = `OPTIMAL OPERATION (Plant Health: ${c.plant_health_score}/100)`;
+        violBadge.className = 'text-xs font-medium bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full';
+        violBadge.innerText = '0 Violations';
+      }
+      msg.innerText = c.summary_statement;
+
+      // Render Abatement Cards
+      const container = document.getElementById('abatementActionsContainer');
+      container.innerHTML = '';
+      if (!c.abatement_actions || c.abatement_actions.length === 0) {
+        container.innerHTML = `
+          <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 text-xs font-semibold flex items-center gap-2">
+            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i> All effluent targets meet EPA and CPCB regulatory standards. No active chemical or operational abatement required.
+          </div>
+        `;
+      } else {
+        c.abatement_actions.forEach((act, idx) => {
+          const borderClass = act.level === 'CRITICAL' ? 'border-l-rose-500' : 'border-l-amber-500';
+          const badgeClass = act.level === 'CRITICAL' ? 'bg-rose-600 text-white' : 'bg-amber-500 text-white';
+          const cardHtml = `
+            <div class="p-4 bg-white border border-slate-200 border-l-4 ${borderClass} rounded-lg shadow-sm space-y-2">
+              <div class="flex justify-between items-center">
+                <h4 class="font-bold text-xs text-slate-900">Directive #${idx+1}: ${act.parameter} (Predicted: ${act.predicted_value} vs Target ${act.target_threshold})</h4>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${badgeClass}">${act.level}</span>
+              </div>
+              <p class="text-xs text-slate-600"><strong>Root Cause Diagnosis:</strong> ${act.root_cause}</p>
+              <div class="bg-slate-50 p-2.5 rounded text-xs text-slate-700">
+                <strong class="text-slate-800">Operational & Chemical Actions:</strong>
+                <ul class="list-disc list-inside mt-1 space-y-0.5 text-slate-600">
+                  ${act.action_steps.map(s => `<li>${s}</li>`).join('')}
+                </ul>
+              </div>
+              <p class="text-xs font-semibold text-emerald-700">🎯 Expected Impact: ${act.expected_impact}</p>
+            </div>
+          `;
+          container.insertAdjacentHTML('beforeend', cardHtml);
+        });
+      }
+      lucide.createIcons();
+    }
+
+    async function renderTimeSeriesChart() {
+      const metric = document.getElementById('tsMetricSelect').value;
+      const res = await fetch(`/api/timeseries?metric=${metric}`);
+      const data = await res.json();
+
+      const ctx = document.getElementById('timeseriesCanvas').getContext('2d');
+      if (chartInstances.timeseries) chartInstances.timeseries.destroy();
+
+      chartInstances.timeseries = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.timestamps,
+          datasets: [
+            {
+              label: `Effluent ${metric}`,
+              data: data.effluent_values,
+              borderColor: '#0284c7',
+              backgroundColor: 'rgba(2, 132, 199, 0.08)',
+              fill: true,
+              tension: 0.3,
+              pointRadius: 0,
+            },
+            {
+              label: `Influent ${metric}`,
+              data: data.influent_values,
+              borderColor: '#f97316',
+              borderDash: [4, 4],
+              pointRadius: 0,
+              hidden: !data.influent_values,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'top' } },
+          scales: {
+            x: { ticks: { maxTicksLimit: 10 } },
+            y: { title: { display: true, text: data.unit } }
+          }
+        }
+      });
+    }
+
+    async function renderAuditChart() {
+      const res = await fetch('/api/summary');
+      const data = await res.json();
+      const rep = data.cleaning_report;
+
+      document.getElementById('auditTotalRecords').innerText = `${rep.final_records.toLocaleString()} hrs`;
+      document.getElementById('auditMissingCells').innerText = `${rep.initial_missing_cells} cells`;
+      const negCount = Object.values(rep.negative_sensor_corrections || {}).reduce((a,b)=>a+b, 0);
+      document.getElementById('auditNegDrifts').innerText = `${negCount} drifts`;
+      document.getElementById('auditQualityScore').innerText = `${rep.data_quality_score}%`;
+
+      const ctx = document.getElementById('sensorAuditCanvas').getContext('2d');
+      if (chartInstances.audit) chartInstances.audit.destroy();
+
+      const labels = Object.keys(rep.imputed_cells_by_feature || {});
+      const values = Object.values(rep.imputed_cells_by_feature || {});
+
+      chartInstances.audit = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Imputed Sensor Packets',
+            data: values,
+            backgroundColor: '#0284c7',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    async function loadModelMetrics() {
+      const res = await fetch('/api/summary');
+      const data = await res.json();
+      const metrics = data.model_metrics;
+
+      const tbody = document.getElementById('metricsTableBody');
+      tbody.innerHTML = '';
+
+      const units = { DO_eff: 'mg/L', BOD_eff: 'mg/L', COD_eff: 'mg/L', pH_eff: 'pH', Turbidity_eff: 'NTU' };
+      Object.entries(metrics.per_target_metrics || {}).forEach(([tgt, m]) => {
+        const row = `
+          <tr class="hover:bg-slate-50">
+            <td class="py-2.5 px-4 font-bold text-slate-800">${tgt}</td>
+            <td class="py-2.5 px-4 text-slate-500">${units[tgt] || ''}</td>
+            <td class="py-2.5 px-4 font-semibold text-sky-700">${m.R2_score}</td>
+            <td class="py-2.5 px-4 text-slate-700">${m.MAE}</td>
+            <td class="py-2.5 px-4 text-slate-700">${m.RMSE}</td>
+            <td class="py-2.5 px-4 text-slate-700">${m.MAPE_pct}%</td>
+          </tr>
+        `;
+        tbody.insertAdjacentHTML('beforeend', row);
+      });
+
+      // Feature Importance
+      const ctx = document.getElementById('featureImportanceCanvas').getContext('2d');
+      if (chartInstances.features) chartInstances.features.destroy();
+
+      const topFeats = Object.entries(metrics.feature_importance_ranking || {}).slice(0, 10);
+      chartInstances.features = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: topFeats.map(f => f[0]),
+          datasets: [{
+            label: 'Gini Feature Importance',
+            data: topFeats.map(f => f[1]),
+            backgroundColor: '#0ea5e9',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+        }
+      });
+    }
+
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', () => {
+      runSimulation();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+{
+  "model_type": "Multi-Output Random Forest Regressor",
+  "n_estimators": 160,
+  "train_samples": 1200,
+  "test_samples": 300,
+  "overall_mean_R2": 0.604,
+  "targets": [
+    "DO_eff",
+    "BOD_eff",
+    "COD_eff",
+    "pH_eff",
+    "Turbidity_eff"
+  ],
+  "features": [
+    "Q_in",
+    "Temp_water",
+    "pH_in",
+    "BOD_in",
+    "COD_in",
+    "TSS_in",
+    "TN_in",
+    "TP_in",
+    "DO_aeration",
+    "Blower_speed_pct",
+    "RAS_flow",
+    "WAS_flow",
+    "MLSS",
+    "PAC_dosage",
+    "HRT_hours",
+    "BOD_COD_ratio_in",
+    "COD_TN_ratio_in",
+    "OLR_kg_m3_day",
+    "FM_ratio",
+    "Clarifier_SOR_m_h",
+    "DO_deficit",
+    "Arrhenius_factor"
+  ],
+  "per_target_metrics": {
+    "DO_eff": {
+      "R2_score": 0.6871,
+      "MAE": 0.215,
+      "RMSE": 0.271,
+      "MAPE_pct": 8.38,
+      "mean_actual": 2.65,
+      "mean_predicted": 2.66
+    },
+    "BOD_eff": {
+      "R2_score": 0.9242,
+      "MAE": 1.928,
+      "RMSE": 2.508,
+      "MAPE_pct": 5.85,
+      "mean_actual": 33.81,
+      "mean_predicted": 33.87
+    },
+    "COD_eff": {
+      "R2_score": 0.8837,
+      "MAE": 5.437,
+      "RMSE": 6.867,
+      "MAPE_pct": 5.78,
+      "mean_actual": 96.03,
+      "mean_predicted": 95.93
+    },
+    "pH_eff": {
+      "R2_score": 0.1893,
+      "MAE": 0.219,
+      "RMSE": 0.306,
+      "MAPE_pct": 3.1,
+      "mean_actual": 7.14,
+      "mean_predicted": 7.13
+    },
+    "Turbidity_eff": {
+      "R2_score": 0.3355,
+      "MAE": 0.529,
+      "RMSE": 0.736,
+      "MAPE_pct": 24.76,
+      "mean_actual": 2.29,
+      "mean_predicted": 2.24
+    }
+  },
+  "feature_importance_ranking": {
+    "FM_ratio": 0.1788,
+    "HRT_hours": 0.1295,
+    "Q_in": 0.1194,
+    "OLR_kg_m3_day": 0.1161,
+    "Clarifier_SOR_m_h": 0.1099,
+    "BOD_in": 0.053,
+    "RAS_flow": 0.0457,
+    "COD_in": 0.0445,
+    "Temp_water": 0.0364,
+    "Arrhenius_factor": 0.034,
+    "TP_in": 0.0255,
+    "TN_in": 0.0242,
+    "TSS_in": 0.023,
+    "DO_deficit": 0.0186,
+    "Blower_speed_pct": 0.0073,
+    "BOD_COD_ratio_in": 0.0061,
+    "COD_TN_ratio_in": 0.0053,
+    "WAS_flow": 0.0049,
+    "MLSS": 0.0047,
+    "PAC_dosage": 0.0046,
+    "pH_in": 0.0042,
+    "DO_aeration": 0.0041
+  }
+}

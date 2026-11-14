@@ -1,0 +1,55 @@
+{
+  "initial_records": 1500,
+  "final_records": 1500,
+  "initial_missing_cells": 87,
+  "final_missing_cells": 0,
+  "negative_sensor_corrections": {
+    "DO_aeration": 7,
+    "PAC_dosage": 3,
+    "DO_eff": 3,
+    "Turbidity_eff": 1
+  },
+  "out_of_bounds_sensor_flags": {
+    "pH_in": 6,
+    "BOD_in": 4,
+    "COD_in": 2,
+    "DO_eff": 9,
+    "pH_eff": 2
+  },
+  "imputed_cells_by_feature": {
+    "Q_in": 12,
+    "Temp_water": 15,
+    "pH_in": 9,
+    "BOD_in": 7,
+    "COD_in": 2,
+    "TN_in": 12,
+    "DO_aeration": 11,
+    "MLSS": 7,
+    "PAC_dosage": 3,
+    "DO_eff": 16,
+    "BOD_eff": 11,
+    "COD_eff": 14,
+    "pH_eff": 2,
+    "Turbidity_eff": 3
+  },
+  "clipped_outliers_by_feature": {
+    "pH_in": 5,
+    "BOD_in": 2,
+    "COD_in": 3,
+    "TSS_in": 4,
+    "pH_eff": 7,
+    "Turbidity_eff": 20
+  },
+  "engineered_features": [
+    "BOD_COD_ratio_in",
+    "COD_TN_ratio_in",
+    "OLR_kg_m3_day",
+    "FM_ratio",
+    "HRT_hours",
+    "Clarifier_SOR_m_h",
+    "DO_saturation_theoretical",
+    "DO_deficit",
+    "Arrhenius_factor"
+  ],
+  "data_quality_score": 99.72
+}
